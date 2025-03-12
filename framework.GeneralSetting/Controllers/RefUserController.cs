@@ -23,15 +23,16 @@ namespace framework.GeneralSetting.Controllers
     {
         #region CONSTRUCTOR
         private readonly IRefUserService _refUserService;
+        private readonly IJwtService _jwtService;
 
         public RefUserController(IRefUserService refUserService, IJwtService jwtService)
         {
             _refUserService = refUserService;
+            _jwtService = jwtService;
         }
         #endregion
 
         #region Transaction
-        //[Authorize]
         [HttpPost]
         [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(ResGeneric<ResRefUser>))]
         [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ResGeneric<object>))]

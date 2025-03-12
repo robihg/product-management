@@ -9,6 +9,6 @@ namespace framework.GeneralSetting.Interfaces.Retrieval
 {
     public interface IRefUserGetService
     {
-        Task<RefUser?> GetRefUserByGuidForAddEdit(Guid guid);
+        Task<RefUser?> GetRefUserByGuid(Guid guid);
     }
 }

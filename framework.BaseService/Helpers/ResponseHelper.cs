@@ -3,12 +3,39 @@ using framework.DTO.BaseDTO.GenericResponse;
 using Microsoft.AspNetCore.Mvc;
 using ProductManagement.DataAccess.Models.Base;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
+using Microsoft.AspNetCore.Http;
 
 
 namespace framework.BaseService.Helpers
 {
     public static class ResponseHelper
     {
+        public static IActionResult? ValidateSearchFilters(decimal? minPrice, decimal? maxPrice)
+        {
+            if (minPrice < 0) return BuildCustomErrorResponse("Min price must be at least 0.", StatusCodes.Status400BadRequest);
+            if (maxPrice < 0) return BuildCustomErrorResponse("Max price must be at least 0.", StatusCodes.Status400BadRequest);
+            if (minPrice > maxPrice) return BuildCustomErrorResponse("Min price cannot be greater than max price.", StatusCodes.Status400BadRequest);
+
+            return null;
+        }
+
+        public static IActionResult BuildCustomErrorResponse(string message, int statusCode)
+        {
+            var errorResponse = new ResGeneric<object>
+            {
+                HeaderObj = new HeaderObj
+                {
+                    StatusCode = statusCode.ToString(),
+                    Message = message,
+                    ResponseTime = DateTime.Now.ToString("o"),
+                    ErrorMessages = new List<ValidationError> { new ValidationError(message) }
+                },
+                Data = null
+            };
+
+            return new ObjectResult(errorResponse) { StatusCode = statusCode };
+        }
+
         public static IActionResult BuildSuccessResponse<T>(T data) where T : class?
         {
             return new OkObjectResult(new ResGeneric<T>
@@ -17,7 +44,7 @@ namespace framework.BaseService.Helpers
                 {
                     StatusCode = "200",
                     Message = "Success",
-                    ResponseTime = DateTime.UtcNow.ToString("o"),
+                    ResponseTime = DateTime.Now.ToString("o"),
                     ErrorMessages = null
                 },
                 Data = data
@@ -37,7 +64,7 @@ namespace framework.BaseService.Helpers
                 {
                     StatusCode = "400",
                     Message = "Validation failed",
-                    ResponseTime = DateTime.UtcNow.ToString("o"),
+                    ResponseTime = DateTime.Now.ToString("o"),
                     ErrorMessages = errors
                 },
                 Data = null
@@ -52,7 +79,7 @@ namespace framework.BaseService.Helpers
                 {
                     StatusCode = "404",
                     Message = message,
-                    ResponseTime = DateTime.UtcNow.ToString("o"),
+                    ResponseTime = DateTime.Now.ToString("o"),
                     ErrorMessages = null
                 },
                 Data = null
@@ -67,7 +94,7 @@ namespace framework.BaseService.Helpers
                 {
                     StatusCode = "500",
                     Message = "An unexpected error occurred.",
-                    ResponseTime = DateTime.UtcNow.ToString("o"),
+                    ResponseTime = DateTime.Now.ToString("o"),
                     ErrorMessages = new List<ValidationError> { new ValidationError(ex.Message) }
                 },
                 Data = null

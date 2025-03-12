@@ -10,12 +10,18 @@ using framework.GeneralSetting.BusinessServices.Retrieval;
 using framework.GeneralSetting.Controllers;
 using framework.GeneralSetting.Interfaces.ModificationService;
 using framework.GeneralSetting.Interfaces.Retrieval;
+using framework.Product.BusinessServices.Modification;
+using framework.Product.BusinessServices.Retrieval;
+using framework.Product.Controllers;
+using framework.Product.Interfaces.Modificaiton;
+using framework.Product.Interfaces.Retrieval;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Mvc.ApplicationParts;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using ProductManagement.DataAccess.DataContexts.GeneralSettings;
+using ProductManagement.DataAccess.DataContexts.Products;
 using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -49,11 +55,15 @@ builder.Services.AddControllers().ConfigureApplicationPartManager(apm =>
 {
     apm.ApplicationParts.Add(new AssemblyPart(typeof(AuthController).Assembly));
     apm.ApplicationParts.Add(new AssemblyPart(typeof(RefUserController).Assembly));
+    apm.ApplicationParts.Add(new AssemblyPart(typeof(ProductController).Assembly));
 });
 
 // Database connection
 var connectionString = builder.Configuration.GetConnectionString("ProductManagementDB");
 builder.Services.AddDbContext<GeneralSettingContext>(options =>
+    options.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString)));
+
+builder.Services.AddDbContext<ProductContext>(options =>
     options.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString)));
 
 // Register dependencies
@@ -101,10 +111,16 @@ builder.Services.AddSwaggerGen(options =>
 builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 
 // Scoped Dependencies
+//DataContext
 builder.Services.AddScoped<IRepository<GeneralSettingContext>, RepositoryImplementor<GeneralSettingContext>>();
+builder.Services.AddScoped<IRepository<ProductContext>, RepositoryImplementor<ProductContext>>();
+
+//Services
 builder.Services.AddScoped<IJwtService, JwtService>();
 builder.Services.AddScoped<IRefUserService, RefUserService>();
 builder.Services.AddScoped<IRefUserGetService, RefUserGetService>();
+builder.Services.AddScoped<IProductService, ProductService>();
+builder.Services.AddScoped<IProductGetService, ProductGetService>();
 
 // Bind JWT settings for DI
 builder.Services.Configure<JwtModel>(builder.Configuration.GetSection("JwtSettings"));
@@ -118,14 +134,15 @@ var app = builder.Build();
 // Check database connection
 using (var scope = app.Services.CreateScope())
 {
-    var dbContext = scope.ServiceProvider.GetRequiredService<GeneralSettingContext>();
+    var generalSettingDbContext = scope.ServiceProvider.GetRequiredService<GeneralSettingContext>();
+    var productDbContext = scope.ServiceProvider.GetRequiredService<ProductContext>();
 
     try
     {
         Console.WriteLine("Checking database connection...");
-        if (dbContext.Database.CanConnect())
+        if (generalSettingDbContext.Database.CanConnect() && productDbContext.Database.CanConnect())
         {
-            Console.WriteLine("Database connection successful!");
+            Console.WriteLine("General Setting and Product connection successful!");
         }
         else
         {
@@ -145,7 +162,7 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI(c =>
     {
         c.SwaggerEndpoint("/swagger/v1/swagger.json", "ProductManagement API v1");
-        c.DefaultModelsExpandDepth(-1); // This code for hide Schema section in swagger
+        //c.DefaultModelsExpandDepth(-1); // This code for hide Schema section in swagger
     });
 }
 

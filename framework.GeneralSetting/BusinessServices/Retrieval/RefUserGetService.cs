@@ -35,7 +35,7 @@ namespace framework.GeneralSetting.BusinessServices.Retrieval
         #endregion
 
         #region GET 
-        public async Task<RefUser?> GetRefUserByGuidForAddEdit(Guid guid)
+        public async Task<RefUser?> GetRefUserByGuid(Guid guid)
         {
             var result = (from a in _context.RefUsers
                           where a.Guid == guid
