@@ -1,4 +1,5 @@
-﻿using framework.DTO.BaseDTO.GenericRequest;
+﻿using framework.BaseService.Models;
+using framework.DTO.BaseDTO.GenericRequest;
 using framework.DTO.ProductDTO.Responses;
 using System;
 using System.Collections.Generic;
@@ -12,5 +13,6 @@ namespace framework.Product.Interfaces.Retrieval
     {
        Task<ProductManagement.DataAccess.Models.Products.Product?> GetProductByGuid(ReqByGuidObj guid);
        Task<List<ResProduct>> SearchProducts(string? name, decimal? minPrice, decimal? maxPrice);
+       Task<PagedResult<ResProduct>> GetPaginatedProducts(PaginationParams paginationParams);
     }
 }
