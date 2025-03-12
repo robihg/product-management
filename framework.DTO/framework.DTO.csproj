@@ -6,4 +6,11 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
+  <ItemGroup>
+    <Folder Include="BaseDTO\" />
+    <Folder Include="GeneralSettingDTO\" />
+    <Folder Include="Mapping\" />
+    <Folder Include="ProductDTO\" />
+  </ItemGroup>
+
 </Project>
