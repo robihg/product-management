@@ -6,6 +6,10 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
+  <Target Name="PostBuild" AfterTargets="Build">
+    <Copy SourceFiles="$(OutputPath)$(AssemblyName).dll" DestinationFolder="$(SolutionDir)libs\" />
+  </Target>
+  
   <ItemGroup>
     <Folder Include="BusinessServices\" />
     <Folder Include="Controllers\" />
