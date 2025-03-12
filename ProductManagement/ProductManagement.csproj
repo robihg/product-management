@@ -26,4 +26,17 @@
     <PackageReference Include="Swashbuckle.AspNetCore" Version="6.6.2" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\framework.BaseService\framework.BaseService.csproj" />
+    <ProjectReference Include="..\framework.DTO\framework.DTO.csproj" />
+    <ProjectReference Include="..\framework.GeneralSetting\framework.GeneralSetting.csproj" />
+    <ProjectReference Include="..\framework.Product\framework.Product.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Reference Include="ProductManagement.DataAccess">
+      <HintPath>..\libs\ProductManagement.DataAccess.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+
 </Project>

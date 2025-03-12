@@ -55,11 +55,11 @@ namespace framework.BaseService.Repository
                 if (entity.State == EntityState.Added)
                 {
                     usrCrtProperty?.SetValue(entity.Entity, userName);
-                    dtmCrtProperty?.SetValue(entity.Entity, DateTime.UtcNow);
+                    dtmCrtProperty?.SetValue(entity.Entity, DateTime.Now);
                 }
 
                 usrUpdProperty?.SetValue(entity.Entity, userName);
-                dtmUpdProperty?.SetValue(entity.Entity, DateTime.UtcNow);
+                dtmUpdProperty?.SetValue(entity.Entity, DateTime.Now);
             }
         }
     }

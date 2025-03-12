@@ -9,20 +9,23 @@
   <Target Name="PostBuild" AfterTargets="Build">
     <Copy SourceFiles="$(OutputPath)$(AssemblyName).dll" DestinationFolder="$(SolutionDir)libs\" />
   </Target>
-  
+
   <ItemGroup>
     <PackageReference Include="AutoMapper" Version="14.0.0" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="8.0.13" />
     <PackageReference Include="Microsoft.AspNetCore.Mvc" Version="2.3.0" />
     <PackageReference Include="Microsoft.EntityFrameworkCore" Version="8.0.2" />
-    <PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" Version="9.0.0" />
-  </ItemGroup> 
+    <PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" Version="9.0.2" />
+  </ItemGroup>
+
   <ItemGroup>
-    <Folder Include="BusinessServices\" />
-    <Folder Include="Controllers\" />
-    <Folder Include="Interfaces\" />
-    <Folder Include="Middlewares\" />
-    <Folder Include="Models\" />
+    <ProjectReference Include="..\framework.DTO\framework.DTO.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Reference Include="ProductManagement.DataAccess">
+      <HintPath>..\libs\ProductManagement.DataAccess.dll</HintPath>
+    </Reference>
   </ItemGroup>
   
 </Project>
