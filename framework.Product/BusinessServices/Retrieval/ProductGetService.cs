@@ -1,5 +1,7 @@
 ﻿using AutoMapper;
+using framework.BaseService.BusinessServices;
 using framework.BaseService.Interfaces.Jwt;
+using framework.BaseService.Models;
 using framework.BaseService.Repository;
 using framework.DTO.BaseDTO.GenericRequest;
 using framework.DTO.ProductDTO.Responses;
@@ -23,17 +25,20 @@ namespace framework.Product.BusinessServices.Retrieval
         private readonly IRepository<ProductContext> _repository;
         private readonly IMapper _mapper;
         private readonly IJwtService _jwtService;
+        private readonly GridPaginationService _gridPaginationService;
         private readonly IHttpContextAccessor _httpContextAccessor;
         public ProductGetService(
             ProductContext context,
             IRepository<ProductContext> repository,
             IMapper mapper,
             IJwtService jwtService,
+            GridPaginationService gridPaginationService,
             IHttpContextAccessor httpContextAccessor)
         {
             _context = context;
             _repository = repository;
             _mapper = mapper;
+            _gridPaginationService = gridPaginationService;
             _jwtService = jwtService;
             _httpContextAccessor = httpContextAccessor;
         }
@@ -70,6 +75,21 @@ namespace framework.Product.BusinessServices.Retrieval
 
             List<ProductManagement.DataAccess.Models.Products.Product?> productResult = await query.ToListAsync();
             return _mapper.Map<List<ResProduct>>(productResult);
+        }
+
+        public async Task<PagedResult<ResProduct>> GetPaginatedProducts(PaginationParams paginationParams)
+        {
+            var query = _context.Products.AsQueryable();
+            var pagedResult = await _gridPaginationService.GetPagedData(query, paginationParams);
+            var mappedProducts = pagedResult.Items.Select(p => _mapper.Map<ResProduct>(p)).ToList();
+
+            return new PagedResult<ResProduct>
+            {
+                Items = mappedProducts,
+                TotalCount = pagedResult.TotalCount,
+                PageNumber = paginationParams.PageNumber,
+                PageSize = paginationParams.PageSize
+            };
         }
         #endregion
 

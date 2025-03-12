@@ -2,8 +2,12 @@
 using framework.DTO.BaseDTO.GenericResponse;
 using framework.DTO.GeneralSettingDTO.Requests;
 using framework.DTO.GeneralSettingDTO.Responses;
+using framework.DTO.ProductDTO.Requests;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
+using Serilog;
+using Serilog.Events;
 
 namespace framework.BaseService.Controllers
 {
@@ -13,10 +17,14 @@ namespace framework.BaseService.Controllers
     {
         #region CONSTRUCTOR
         private readonly IJwtService _jwtService;
+        private readonly ILogger<AuthController> _logger;
 
-        public AuthController(IJwtService jwtService)
+        public AuthController(
+            IJwtService jwtService,
+             ILogger<AuthController> logger)
         {
             _jwtService = jwtService;
+            _logger = logger;
         }
         #endregion
 
@@ -29,20 +37,24 @@ namespace framework.BaseService.Controllers
         {
             try
             {
+                _logger.LogInformation("trying to login with username: {0}", reqLogin.Username);
                 string username = reqLogin.Username;
                 string password = reqLogin.Password;
 
                 var user = await _jwtService.Authenticated(username, password);
                 var token = _jwtService.GenerateToken(user.Id, user.Username, user.Email);
 
+                _logger.LogInformation("Successfuly login with username: {0}", reqLogin.Username);
                 return Ok(new { Token = token });
             }
             catch (KeyNotFoundException ex)
             {
+                _logger.LogWarning("Unauthorized login by : {0}", reqLogin.Username);
                 return Unauthorized(new { Message = ex.Message });
             }
             catch (Exception ex)
             {
+                _logger.LogWarning("Login errpor by username : {0}", reqLogin.Username);
                 var responseService = new ResBuilder<object>();
                 return responseService.BuildErrorResponse(ex);
             }
