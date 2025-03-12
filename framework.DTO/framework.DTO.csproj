@@ -5,7 +5,11 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
   </PropertyGroup>
-
+  
+  <Target Name="PostBuild" AfterTargets="Build">
+    <Copy SourceFiles="$(OutputPath)$(AssemblyName).dll" DestinationFolder="$(SolutionDir)libs\" />
+  </Target>
+  
   <ItemGroup>
     <Folder Include="BaseDTO\" />
     <Folder Include="GeneralSettingDTO\" />
