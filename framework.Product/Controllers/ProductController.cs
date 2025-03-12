@@ -1,5 +1,6 @@
 ﻿using framework.BaseService.Helpers;
 using framework.BaseService.Interfaces.Jwt;
+using framework.BaseService.Models;
 using framework.DTO.BaseDTO.GenericRequest;
 using framework.DTO.BaseDTO.GenericResponse;
 using framework.DTO.GeneralSettingDTO.Requests;
@@ -62,7 +63,28 @@ namespace framework.Product.Controllers
                 return ResponseHelper.BuildErrorResponse(ex);
             }
         }
+
+        [Authorize]
+        [HttpGet("grid")]
+        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(ResGeneric<PagedResult<ResProduct>>))]
+        [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ResGeneric<object>))]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized, Type = typeof(ResGeneric<object>))]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError, Type = typeof(ResGeneric<object>))]
+        public async Task<IActionResult> GetProducts([FromQuery] PaginationParams paginationParams)
+        {
+            try
+            {
+                var pagedProducts = await _productGetService.GetPaginatedProducts(paginationParams);
+                return ResponseHelper.BuildSuccessResponse(pagedProducts);
+            }
+            catch (Exception ex)
+            {
+                return ResponseHelper.BuildErrorResponse(ex);
+            }
+        }
+
         #endregion
+
         #region Transaction
         [Authorize]
         [HttpPost]

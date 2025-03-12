@@ -2,7 +2,6 @@
 using framework.BaseService.Interfaces.Jwt;
 using framework.BaseService.Repository;
 using framework.DTO.BaseDTO.GenericRequest;
-using framework.DTO.GeneralSettingDTO.Responses;
 using framework.DTO.ProductDTO.Requests;
 using framework.DTO.ProductDTO.Responses;
 using framework.Product.Interfaces.Modificaiton;
@@ -14,6 +13,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Serilog;
+using Serilog.Events;
+using Microsoft.Extensions.Logging;
 
 namespace framework.Product.BusinessServices.Modification
 {
@@ -26,6 +28,7 @@ namespace framework.Product.BusinessServices.Modification
         private readonly IJwtService _jwtService;
         private readonly IHttpContextAccessor _httpContextAccessor;
         private readonly IProductGetService _productGetService;
+        private readonly ILogger<ProductService> _logger;
 
         public ProductService(
             ProductContext context,
@@ -33,7 +36,8 @@ namespace framework.Product.BusinessServices.Modification
             IMapper mapper,
             IJwtService jwtService,
             IHttpContextAccessor httpContextAccessor,
-            IProductGetService productGetService)
+            IProductGetService productGetService,
+            ILogger<ProductService> logger)
         {
             _context = context;
             _repository = repository;
@@ -41,6 +45,7 @@ namespace framework.Product.BusinessServices.Modification
             _jwtService = jwtService;
             _httpContextAccessor = httpContextAccessor;
             _productGetService = productGetService;
+            _logger = logger;
 
 
         }
@@ -49,27 +54,39 @@ namespace framework.Product.BusinessServices.Modification
         #region ADD EDIT DELETE PRODUCT
         public virtual async Task<ResProduct> AddEditProduct(ReqProduct reqProduct)
         {
-            ProductManagement.DataAccess.Models.Products.Product? product = null;
-            if (reqProduct.Guid.HasValue)
+            try
             {
-                product = await _productGetService.GetProductByGuid(new ReqByGuidObj { Guid = reqProduct.Guid.Value });
-            }
+                _logger.LogInformation("Adding/Editing product: {ProductName}", reqProduct.Name);
 
-            if (product == null)
+                ProductManagement.DataAccess.Models.Products.Product? product = null;
+                if (reqProduct.Guid.HasValue)
+                {
+                    product = await _productGetService.GetProductByGuid(new ReqByGuidObj { Guid = reqProduct.Guid.Value });
+                }
+
+                if (product == null)
+                {
+                    product = _mapper.Map<ProductManagement.DataAccess.Models.Products.Product>(reqProduct);
+                    product.Guid = Guid.NewGuid();
+
+                    _repository.Add(product);
+                }
+                else
+                {
+                    _mapper.Map(reqProduct, product);
+                }
+
+                await _repository.SaveChangesAsync();
+                _logger.LogInformation("Success Adding/Editing product: {ProductName}", reqProduct.Name);
+
+                return _mapper.Map<ResProduct>(product);
+            }
+            catch (Exception ex)
             {
-                product = _mapper.Map<ProductManagement.DataAccess.Models.Products.Product>(reqProduct);
-                product.Guid = Guid.NewGuid();
-
-                _repository.Add(product);
+                _logger.LogError(ex, "Error while adding product {ProductName}", reqProduct.Name);
+                return null; 
             }
-            else
-            {
-                _mapper.Map(reqProduct, product);
-            }
-
-            await _repository.SaveChangesAsync();
-
-            return _mapper.Map<ResProduct>(product);
+           
         }
         public virtual async Task<ResProduct> DeleteProduct(ReqByGuidObj guid)
         {
@@ -77,10 +94,12 @@ namespace framework.Product.BusinessServices.Modification
 
             if (product == null)
             {
+                _logger.LogWarning("Product not found for deletion: {0}", guid.Guid);
                 return null;
             }
             _repository.Remove(product);
             await _repository.SaveChangesAsync();
+            _logger.LogWarning("Deleted product: {0}", guid.Guid);
             return _mapper.Map<ResProduct>(product);
         }
         #endregion

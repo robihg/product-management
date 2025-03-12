@@ -1,4 +1,5 @@
 
+using framework.BaseService.BusinessServices;
 using framework.BaseService.BusinessServices.Jwt;
 using framework.BaseService.Controllers;
 using framework.BaseService.Interfaces.Jwt;
@@ -22,9 +23,19 @@ using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using ProductManagement.DataAccess.DataContexts.GeneralSettings;
 using ProductManagement.DataAccess.DataContexts.Products;
+using Serilog;
 using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
+//Configure Serilog
+Log.Logger = new LoggerConfiguration()
+    .WriteTo.Console()
+    .WriteTo.File("logs/app.log", rollingInterval: RollingInterval.Day)
+    .Enrich.FromLogContext()
+    .MinimumLevel.Information()
+    .CreateLogger();
+
+builder.Host.UseSerilog();
 
 // Load JWT settings from configuration
 var jwtSettings = builder.Configuration.GetSection("JwtSettings").Get<JwtModel>()
@@ -107,6 +118,10 @@ builder.Services.AddSwaggerGen(options =>
     });
 });
 
+//Register Serilog as the logger
+builder.Logging.ClearProviders();
+builder.Logging.AddSerilog();
+
 // AutoMapper
 builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 
@@ -121,6 +136,7 @@ builder.Services.AddScoped<IRefUserService, RefUserService>();
 builder.Services.AddScoped<IRefUserGetService, RefUserGetService>();
 builder.Services.AddScoped<IProductService, ProductService>();
 builder.Services.AddScoped<IProductGetService, ProductGetService>();
+builder.Services.AddScoped<GridPaginationService>();
 
 // Bind JWT settings for DI
 builder.Services.Configure<JwtModel>(builder.Configuration.GetSection("JwtSettings"));
@@ -131,6 +147,7 @@ builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
 
+app.UseSerilogRequestLogging();
 // Check database connection
 using (var scope = app.Services.CreateScope())
 {
@@ -174,5 +191,6 @@ app.UseAuthorization();
 app.MapControllers();
 
 app.UseMiddleware<JwtMiddleware>();
+
 
 app.Run();
