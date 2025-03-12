@@ -47,7 +47,7 @@ namespace framework.GeneralSetting.BusinessServices.Modification
         #region ADD EDIT DELETE REF USER
         public virtual async Task<RefUser> AddEditRefUser(ReqRefUser reqRefUser)
         {
-            RefUser ru = reqRefUser.Guid.HasValue ? await _refUserGetService.GetRefUserByGuidForAddEdit(reqRefUser.Guid.Value) : null;
+            RefUser ru = reqRefUser.Guid.HasValue ? await _refUserGetService.GetRefUserByGuid(reqRefUser.Guid.Value) : null;
 
             if (ru == null)
             {

@@ -30,6 +30,7 @@
     <ProjectReference Include="..\framework.BaseService\framework.BaseService.csproj" />
     <ProjectReference Include="..\framework.DTO\framework.DTO.csproj" />
     <ProjectReference Include="..\framework.GeneralSetting\framework.GeneralSetting.csproj" />
+    <ProjectReference Include="..\framework.Product\framework.Product.csproj" />
   </ItemGroup>
 
   <ItemGroup>

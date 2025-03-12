@@ -13,7 +13,7 @@ namespace framework.DTO.BaseDTO.GenericRequest
     {
         [FromQuery(Name = "guid")]
         [JsonPropertyName("guid")]
-        [Range(1, long.MaxValue, ErrorMessage = "The Field {0} must be greater than {1}")]
+        [Required(ErrorMessage = "Guid is required.")]
         public Guid Guid { get; set; }
     }
 }
