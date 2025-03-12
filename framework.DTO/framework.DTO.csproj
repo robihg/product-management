@@ -17,7 +17,6 @@
     <PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" Version="9.0.0" />
   </ItemGroup>
 
-  
   <ItemGroup>
     <Reference Include="ProductManagement.DataAccess">
       <HintPath>..\libs\ProductManagement.DataAccess.dll</HintPath>

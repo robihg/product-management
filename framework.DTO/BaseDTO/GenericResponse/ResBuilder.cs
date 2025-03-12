@@ -9,17 +9,18 @@ namespace framework.DTO.BaseDTO.GenericResponse
         {
             return BuildSuccessResponse(new List<T> { data });
         }
-        public IActionResult BuildSuccessResponse(List<T> data)
+        public static IActionResult BuildSuccessResponse<T>(T data)
         {
             var response = new ResGeneric<T>
             {
                 HeaderObj = new HeaderObj
                 {
-                    ResponseTime = DateTime.Now.ToString("o"),
                     StatusCode = "200",
-                    Message = "Success"
+                    Message = "Success",
+                    ResponseTime = DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:ssZ"),
+                    ErrorMessages = null
                 },
-                Data = data ?? new List<T>()
+                Data = data ?? (typeof(T) == typeof(List<T>) ? (T)(object)new List<T>() : default)
             };
 
             return new OkObjectResult(response);
@@ -31,11 +32,11 @@ namespace framework.DTO.BaseDTO.GenericResponse
             {
                 HeaderObj = new HeaderObj
                 {
-                    ResponseTime = DateTime.Now.ToString(),
+                    ResponseTime = DateTime.UtcNow.ToString("o"),
                     StatusCode = "404",
                     Message = message
                 },
-                Data = []
+                Data = null
             };
 
             return new NotFoundObjectResult(errorResponse);
@@ -47,18 +48,19 @@ namespace framework.DTO.BaseDTO.GenericResponse
             {
                 HeaderObj = new HeaderObj
                 {
-                    ResponseTime = DateTime.Now.ToString("o"),
+                    ResponseTime = DateTime.UtcNow.ToString("o"),
                     StatusCode = "500",
                     Message = "Error",
                     ErrorMessages = new List<ValidationError>
-                    {
-                       new ValidationError(ex.Message, "Internal Error")
-                    }
+            {
+                new ValidationError(ex.Message, "Internal Error")
+            }
                 },
-                Data = []
+                Data = null 
             };
 
             return new ObjectResult(errorResponse) { StatusCode = 500 };
         }
+
     }
 }
