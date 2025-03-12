@@ -1,9 +1,15 @@
+
 using framework.BaseService.BusinessServices.Jwt;
 using framework.BaseService.Controllers;
 using framework.BaseService.Interfaces.Jwt;
 using framework.BaseService.Middlewares.Jwt;
 using framework.BaseService.Models.Jwt;
 using framework.BaseService.Repository;
+using framework.GeneralSetting.BusinessServices.Modification;
+using framework.GeneralSetting.BusinessServices.Retrieval;
+using framework.GeneralSetting.Controllers;
+using framework.GeneralSetting.Interfaces.ModificationService;
+using framework.GeneralSetting.Interfaces.Retrieval;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Mvc.ApplicationParts;
 using Microsoft.EntityFrameworkCore;
@@ -16,7 +22,7 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Load JWT settings from configuration
 var jwtSettings = builder.Configuration.GetSection("JwtSettings").Get<JwtModel>()
-    ?? throw new Exception("JWT settings are missing in configuration.");
+    ?? throw new Exception("JWT settings are missing in appsettings.json configuration.");
 
 // Convert the secret key to bytes
 var secretKey = Encoding.UTF8.GetBytes(jwtSettings.SecretKey);
@@ -42,6 +48,7 @@ builder.Services.AddControllers();
 builder.Services.AddControllers().ConfigureApplicationPartManager(apm =>
 {
     apm.ApplicationParts.Add(new AssemblyPart(typeof(AuthController).Assembly));
+    apm.ApplicationParts.Add(new AssemblyPart(typeof(RefUserController).Assembly));
 });
 
 // Database connection
@@ -96,6 +103,8 @@ builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 // Scoped Dependencies
 builder.Services.AddScoped<IRepository<GeneralSettingContext>, RepositoryImplementor<GeneralSettingContext>>();
 builder.Services.AddScoped<IJwtService, JwtService>();
+builder.Services.AddScoped<IRefUserService, RefUserService>();
+builder.Services.AddScoped<IRefUserGetService, RefUserGetService>();
 
 // Bind JWT settings for DI
 builder.Services.Configure<JwtModel>(builder.Configuration.GetSection("JwtSettings"));

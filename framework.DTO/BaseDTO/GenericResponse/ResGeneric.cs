@@ -10,6 +10,6 @@ namespace framework.DTO.BaseDTO.GenericResponse
     public class ResGeneric<T>
     {
         public required HeaderObj HeaderObj { get; set; }
-        public required List<T> Data { get; set; }
+        public T Data { get; set; }
     }
 }
