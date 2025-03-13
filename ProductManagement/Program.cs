@@ -1,21 +1,18 @@
-
 using framework.BaseService.BusinessServices;
 using framework.BaseService.BusinessServices.Jwt;
-using framework.BaseService.Controllers;
 using framework.BaseService.Interfaces.Jwt;
 using framework.BaseService.Middlewares.Jwt;
 using framework.BaseService.Models.Jwt;
 using framework.BaseService.Repository;
 using framework.GeneralSetting.BusinessServices.Modification;
 using framework.GeneralSetting.BusinessServices.Retrieval;
-using framework.GeneralSetting.Controllers;
 using framework.GeneralSetting.Interfaces.ModificationService;
 using framework.GeneralSetting.Interfaces.Retrieval;
 using framework.Product.BusinessServices.Modification;
 using framework.Product.BusinessServices.Retrieval;
-using framework.Product.Controllers;
 using framework.Product.Interfaces.Modificaiton;
 using framework.Product.Interfaces.Retrieval;
+using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Mvc.ApplicationParts;
 using Microsoft.EntityFrameworkCore;
@@ -27,7 +24,8 @@ using Serilog;
 using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
-//Configure Serilog
+
+// Configure Serilog
 Log.Logger = new LoggerConfiguration()
     .WriteTo.Console()
     .WriteTo.File("logs/app.log", rollingInterval: RollingInterval.Day)
@@ -40,49 +38,45 @@ builder.Host.UseSerilog();
 // Load JWT settings from configuration
 var jwtSettings = builder.Configuration.GetSection("JwtSettings").Get<JwtModel>()
     ?? throw new Exception("JWT settings are missing in appsettings.json configuration.");
-
-// Convert the secret key to bytes
 var secretKey = Encoding.UTF8.GetBytes(jwtSettings.SecretKey);
 
-// Configure authentication with JWT Bearer
-builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-    .AddJwtBearer(options =>
-    {
-        options.TokenValidationParameters = new TokenValidationParameters
-        {
-            ValidateIssuer = true,
-            ValidateAudience = true,
-            ValidateLifetime = true,
-            ValidateIssuerSigningKey = true,
-            ValidIssuer = jwtSettings.Issuer,
-            ValidAudience = jwtSettings.Audience,
-            IssuerSigningKey = new SymmetricSecurityKey(secretKey)
-        };
-    });
-
-// Add services to the container.
-builder.Services.AddControllers();
-builder.Services.AddControllers().ConfigureApplicationPartManager(apm =>
+// Configure authentication with JWT and Cookie Authentication
+builder.Services.AddAuthentication(options =>
 {
-    apm.ApplicationParts.Add(new AssemblyPart(typeof(AuthController).Assembly));
-    apm.ApplicationParts.Add(new AssemblyPart(typeof(RefUserController).Assembly));
-    apm.ApplicationParts.Add(new AssemblyPart(typeof(ProductController).Assembly));
+    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultSignInScheme = CookieAuthenticationDefaults.AuthenticationScheme;
+    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+})
+.AddJwtBearer(options =>
+{
+    options.TokenValidationParameters = new TokenValidationParameters
+    {
+        ValidateIssuer = true,
+        ValidateAudience = true,
+        ValidateLifetime = true,
+        ValidateIssuerSigningKey = true,
+        ValidIssuer = jwtSettings.Issuer,
+        ValidAudience = jwtSettings.Audience,
+        IssuerSigningKey = new SymmetricSecurityKey(secretKey)
+    };
+})
+.AddCookie(CookieAuthenticationDefaults.AuthenticationScheme, options =>
+{
+    options.LoginPath = "/Account/Login"; // Redirect unauthorized users to login
+    options.LogoutPath = "/Account/Logout";
+    options.AccessDeniedPath = "/Account/Login";
 });
 
-// Database connection
-var connectionString = builder.Configuration.GetConnectionString("ProductManagementDB");
-builder.Services.AddDbContext<GeneralSettingContext>(options =>
-    options.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString)));
+// Register HttpClientFactory
+builder.Services.AddHttpClient();
 
-builder.Services.AddDbContext<ProductContext>(options =>
-    options.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString)));
+// Register Controllers & Razor Pages
+builder.Services.AddControllersWithViews();
+builder.Services.AddRazorPages();
 
-// Register dependencies
-builder.Services.AddHttpContextAccessor();
+
+// Swagger registration
 builder.Services.AddEndpointsApiExplorer();
-
-
-// Add Swagger with JWT Support
 builder.Services.AddSwaggerGen(options =>
 {
     options.SwaggerDoc("v1", new OpenApiInfo
@@ -118,19 +112,19 @@ builder.Services.AddSwaggerGen(options =>
     });
 });
 
-//Register Serilog as the logger
-builder.Logging.ClearProviders();
-builder.Logging.AddSerilog();
+// Database connection
+var connectionString = builder.Configuration.GetConnectionString("ProductManagementDB");
+builder.Services.AddDbContext<GeneralSettingContext>(options =>
+    options.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString)));
 
-// AutoMapper
+builder.Services.AddDbContext<ProductContext>(options =>
+    options.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString)));
+
+// Register dependencies
+builder.Services.AddHttpContextAccessor();
 builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
-
-// Scoped Dependencies
-//DataContext
 builder.Services.AddScoped<IRepository<GeneralSettingContext>, RepositoryImplementor<GeneralSettingContext>>();
 builder.Services.AddScoped<IRepository<ProductContext>, RepositoryImplementor<ProductContext>>();
-
-//Services
 builder.Services.AddScoped<IJwtService, JwtService>();
 builder.Services.AddScoped<IRefUserService, RefUserService>();
 builder.Services.AddScoped<IRefUserGetService, RefUserGetService>();
@@ -141,14 +135,41 @@ builder.Services.AddScoped<GridPaginationService>();
 // Bind JWT settings for DI
 builder.Services.Configure<JwtModel>(builder.Configuration.GetSection("JwtSettings"));
 
-// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
-builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
-
 var app = builder.Build();
 
+//  Enable Serilog logging
 app.UseSerilogRequestLogging();
-// Check database connection
+
+// Enable static files (for Bootstrap & CSS)
+app.UseStaticFiles();
+
+// Enable routing
+app.UseRouting();
+
+// Enable Authentication & Authorization
+app.UseAuthentication();
+app.UseAuthorization();
+
+// Map Controllers and Razor Pages
+app.MapControllers();
+app.MapRazorPages();
+app.MapControllerRoute(
+    name: "default",
+    pattern: "{controller=Home}/{action=Index}/{id?}");
+
+// Fix Swagger execution order
+if (app.Environment.IsDevelopment())
+{
+    app.UseSwagger();  // Ensure Swagger is available in development
+    app.UseSwaggerUI(c =>
+    {
+        c.SwaggerEndpoint("/swagger/v1/swagger.json", "ProductManagement API v1");
+    });
+}
+
+app.UseHttpsRedirection();
+
+//Check database connection
 using (var scope = app.Services.CreateScope())
 {
     var generalSettingDbContext = scope.ServiceProvider.GetRequiredService<GeneralSettingContext>();
@@ -159,7 +180,7 @@ using (var scope = app.Services.CreateScope())
         Console.WriteLine("Checking database connection...");
         if (generalSettingDbContext.Database.CanConnect() && productDbContext.Database.CanConnect())
         {
-            Console.WriteLine("General Setting and Product connection successful!");
+            Console.WriteLine("Database connection successful!");
         }
         else
         {
@@ -171,26 +192,5 @@ using (var scope = app.Services.CreateScope())
         Console.WriteLine($"Database connection failed: {ex.Message}");
     }
 }
-
-// Configure the HTTP request pipeline
-if (app.Environment.IsDevelopment())
-{
-    app.UseSwagger();
-    app.UseSwaggerUI(c =>
-    {
-        c.SwaggerEndpoint("/swagger/v1/swagger.json", "ProductManagement API v1");
-        //c.DefaultModelsExpandDepth(-1); // This code for hide Schema section in swagger
-    });
-}
-
-app.UseHttpsRedirection();
-
-app.UseAuthentication();
-app.UseAuthorization();
-
-app.MapControllers();
-
-app.UseMiddleware<JwtMiddleware>();
-
 
 app.Run();

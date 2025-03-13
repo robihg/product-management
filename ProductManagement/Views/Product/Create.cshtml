@@ -1,0 +1,32 @@
+﻿@using ProductManagement.Models
+@model ProductViewModel
+
+@{
+    ViewData["Title"] = "Add Product";
+}
+
+<div class="container mt-4">
+    <h2>Add New Product</h2>
+
+    @if (ViewBag.Error != null)
+    {
+        <div class="alert alert-danger">@ViewBag.Error</div>
+    }
+
+    <form method="post" action="@Url.Action("Save", "Product")">
+        <div class="form-group">
+            <label>Name</label>
+            <input type="text" name="Name" class="form-control" required>
+        </div>
+        <div class="form-group">
+            <label>Description</label>
+            <textarea name="Description" class="form-control" required></textarea>
+        </div>
+        <div class="form-group">
+            <label>Price</label>
+            <input type="number" step="0.01" name="Price" class="form-control" required>
+        </div>
+        <button type="submit" class="btn btn-primary">Save</button>
+        <a href="@Url.Action("Index", "Product")" class="btn btn-secondary">Cancel</a>
+    </form>
+</div>
