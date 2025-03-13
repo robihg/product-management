@@ -1,6 +1,8 @@
 # ProductManagement
-
-API Functional Test using Swagger
+# API Using Razor View 
+1. Access using http://localhost:5014/
+2. 
+# API Functional Test using Swagger
 1. run the project
 2. go to this endpoint /api/v1/RefUser and then create user using this json example
   {
