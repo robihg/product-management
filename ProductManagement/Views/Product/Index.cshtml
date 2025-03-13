@@ -1,0 +1,94 @@
+﻿@model ProductViewModel
+@{
+    ViewData["Title"] = "Product Management";
+    var successMessage = TempData["Success"] as string;
+}
+
+<h2>Product Management</h2>
+
+@if (ViewBag.Error != null)
+{
+    <div class="alert alert-danger">@ViewBag.Error</div>
+}
+@if (TempData["Success"] != null)
+{
+    <div class="alert alert-success">@successMessage</div>
+}
+
+<!-- Search Form -->
+<form method="post" action="@Url.Action("SearchTerm", "Product")" class="mb-3">
+    <div class="input-group">
+        <input type="text" name="searchTerm" class="form-control" placeholder="Search products..." value="@Context.Request.Query["searchTerm"]" />
+        <div class="input-group-append">
+            <button type="submit" class="btn btn-primary">Search</button>
+        </div>
+    </div>
+</form>
+
+<!-- "Add New Product" Button -->
+<div class="mb-3">
+    <a href="@Url.Action("Create", "Product")" class="btn btn-success">Add New Product</a>
+</div>
+
+<!-- Product Table -->
+<table class="table table-bordered table-hover">
+    <thead class="thead-dark">
+        <tr>
+            <th class="d-none">Guid</th> 
+            <th>Name</th>
+            <th>Description</th>
+            <th>Price</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        @if (Model.Products.Any())
+        {
+            @foreach (var product in Model.Products)
+            {
+                <tr>
+                    <td class="d-none">@product.Guid</td> 
+                    <td>@product.Name</td>
+                    <td>@product.Description</td>
+                    <td>@product.Price.ToString("C")</td>
+                    <td>
+                        <a href="@Url.Action("Edit", "Product", new { guid = product.Guid })" class="btn btn-warning btn-sm">Edit</a>
+
+                        <form method="post" action="@Url.Action("Delete", "Product")"
+                              >
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="guid" value="@product.Guid" />
+                            <button type="submit" class="btn btn-danger btn-sm">Delete</button>
+                        </form>
+
+
+                    </td>
+                </tr>
+            }
+        }
+        else
+        {
+            <tr>
+                <td colspan="4" class="text-center">No products found.</td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+<!-- Pagination -->
+@if (Model.TotalCount > Model.PageSize)
+{
+    <nav>
+        <ul class="pagination">
+            @for (int i = 1; i <= Math.Ceiling((double)Model.TotalCount / Model.PageSize); i++)
+            {
+                <li class="page-item @(Model.PageNumber == i ? "active" : "")">
+                    <a class="page-link" asp-action="Index"
+                       asp-route-pageNumber="@i"
+                       asp-route-pageSize="@Model.PageSize"
+                       asp-route-searchTerm="@Context.Request.Query["searchTerm"]">@i</a>
+                </li>
+            }
+        </ul>
+    </nav>
+}

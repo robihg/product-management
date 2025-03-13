@@ -1,0 +1,29 @@
+﻿@{
+    ViewData["Title"] = "Home";
+}
+
+<div class="container mt-5">
+    <h1 class="text-primary">Welcome to <b>Product Management</b></h1>
+    <p class="lead">Manage your products efficiently with our secure system.</p>
+
+    <div class="row">
+        <div class="co-md-4">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title"><i class="fas fa-user-plus"></i> Register</h5>
+                    <p class="card-text">Create a new account to start managing products.</p>
+                    <a href="@Url.Action("Register", "Account")" class="btn btn-success">Register</a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title"><i class="fas fa-box"></i> Product List</h5>
+                    <p class="card-text">View, add, edit, and manage products securely.</p>
+                    <a href="@Url.Action("Index", "Product")" class="btn btn-warning">Manage Products</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
